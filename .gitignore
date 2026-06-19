@@ -1,0 +1,40 @@
+# Секреты — никогда не коммитить!
+.env
+
+# Виртуальное окружение
+.venv/
+venv/
+env/
+
+# История диалогов (персональные данные)
+history_*.json
+conversation_history.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.Python
+
+# Дистрибутивы / сборки
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Тесты / покрытие
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Логи
+*.log
