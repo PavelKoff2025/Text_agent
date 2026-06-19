@@ -1,316 +1,182 @@
-# TextAgent — пример работы с Chat Completions API
+# TextAgent
 
-Простой пример на Python с использованием официального модуля `openai`, который поддерживает **сохранение контекста** (режим диалога).
+Python-агент для работы с языковыми моделями через Chat Completions API и Anthropic API. Поддерживает **сохранение контекста диалога**, **режим thinking** (расширенные рассуждения Claude) и **Telegram-бота** с inline-интерфейсом.
 
-## Проблема с официальным OpenAI
+## Возможности
 
-Если вы запускаете код и получаете ошибку:
-
-```
-openai.PermissionDeniedError: Error code: 403 - {'error': {'code': 'unsupported_country_region_territory', ...}}
-```
-
-Это означает, что **OpenAI не поддерживает вашу страну/регион** (Россия и ряд других).  
-Прямые запросы на `api.openai.com` блокируются.
-
-Решение — использовать любой **совместимый с OpenAI API** провайдер через переменную `OPENAI_BASE_URL`.
+- 🤖 Два бэкенда: OpenAI-совместимый (gpt-4o-mini, llama и др.) и Anthropic (Claude)
+- 🧠 Режим **thinking** — видите внутренние рассуждения модели перед ответом
+- 💾 Автосохранение истории диалога между сессиями
+- 📱 Telegram-бот с inline-кнопками и индикатором «печатает»
+- 🌍 Поддержка альтернативных провайдеров (ProxyAPI, Groq, OpenRouter, Ollama)
+- 🔒 Конфигурация через `.env`, секреты не попадают в репозиторий
 
 ## Быстрый старт
 
-1. Скопируйте пример окружения:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Откройте `.env` и настройте провайдер (см. примеры ниже).
-
-3. Установите зависимости (уже сделано в `.venv`):
-   ```bash
-   .venv/bin/pip install -r requirements.txt
-   ```
-
-4. Запустите интерактивный чат (как у преподавателя):
-   ```bash
-   .venv/bin/python text_agent.py
-   ```
-
-   Или запустите тестовый демо с несколькими сообщениями:
-   ```bash
-   .venv/bin/python chat_test.py
-   ```
-
-## Интерактивный диалог (как у преподавателя)
-
-Запустите:
-
 ```bash
-python text_agent.py
+# 1. Клонируйте репозиторий
+git clone https://github.com/PavelKoff2025/Text_agent.git
+cd Text_agent
+
+# 2. Создайте виртуальное окружение и установите зависимости
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+# 3. Настройте переменные окружения
+cp .env.example .env
+# Откройте .env и вставьте ваши API-ключи
+
+# 4. Запустите консольный агент
+.venv/bin/python text_agent.py
+
+# 5. Или Telegram-бот
+.venv/bin/python bot.py
 ```
-
-Вы увидите:
-
-```
-Начните диалог с ИИ. Введите 'exit' для выхода.
-
-Вы: Привет!
-AI: Привет! Чем могу помочь?
-
-Вы: В китае йены или юани?
-AI: В Китае используется валюта под названием юань...
-```
-
-Особенности:
-- Полноценный цикл ввода-вывода (`input()`)
-- **Контекст сохраняется** — модель видит всю историю сообщений, поэтому помнит предыдущие реплики
-- Для выхода введите `exit`, `выход`, `quit` или `q`
-
-## Рекомендуемые провайдеры
-
-### 0. ProxyAPI.ru (рекомендация преподавателя)
-
-Самый простой вариант, если вы проходите курс — используете **свой обычный ключ OpenAI**, но идёте через российский прокси.
-
-**Шаги:**
-1. У вас уже есть `OPENAI_API_KEY` (начинается на `sk-` или `sk-proj-`)
-2. Добавьте в `.env`:
-   ```env
-   OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1
-   OPENAI_MODEL=gpt-4o-mini
-   ```
-
-Это именно то, что показывал преподаватель на скриншоте:
-```python
-OpenAI(..., base_url="https://api.proxyapi.ru/openai/v1")
-```
-
-### 1. Groq (лучший выбор для начала)
-
-- Очень быстрый inference
-- Бесплатный тарифный план
-- Полностью совместим с OpenAI API
-
-**Шаги:**
-1. Перейдите: https://console.groq.com/keys
-2. Создайте API ключ
-3. В `.env`:
-   ```env
-   OPENAI_API_KEY=gsk_ваш_ключ_сюда
-   OPENAI_BASE_URL=https://api.groq.com/openai/v1
-   OPENAI_MODEL=llama-3.3-70b-versatile
-   ```
-
-Хорошие модели:
-- `llama-3.3-70b-versatile` — качественная
-- `llama-3.1-8b-instant` — очень быстрая
-
-### 2. OpenRouter
-
-- Много разных моделей (включая Llama, Claude, Gemini и т.д.)
-- Удобный единый API
-
-**Шаги:**
-1. https://openrouter.ai/keys
-2. В `.env`:
-   ```env
-   OPENAI_API_KEY=sk-or-ваш_ключ
-   OPENAI_BASE_URL=https://openrouter.ai/api/v1
-   OPENAI_MODEL=meta-llama/llama-3.1-70b-instruct
-   ```
-
-### 3. Ollama (локально, без интернета для инференса)
-
-- Запускаете модель у себя на компьютере
-- Полностью бесплатно
-- Не требует внешних ключей
-
-**Шаги:**
-1. Установите Ollama: https://ollama.com
-2. Скачайте модель:
-   ```bash
-   ollama pull llama3.2
-   ```
-3. В `.env`:
-   ```env
-   OPENAI_API_KEY=ollama
-   OPENAI_BASE_URL=http://localhost:11434/v1
-   OPENAI_MODEL=llama3.2
-   ```
-
-### 4. Официальный OpenAI
-
-Работает **только** если вы находитесь в поддерживаемой стране.
-
-```env
-OPENAI_API_KEY=sk-...
-# OPENAI_BASE_URL не указывайте
-OPENAI_MODEL=gpt-4o-mini
-```
-
-## Как работает сохранение контекста
-
-Ключевой момент — мы передаём **всю историю** сообщений при каждом запросе:
-
-```python
-session["messages"].append({"role": "user", "content": user_message})
-response = client.chat.completions.create(
-    model=session["model"],
-    messages=session["messages"],   # ← вся история здесь
-    ...
-)
-session["messages"].append({"role": "assistant", "content": assistant_message})
-```
-
-Благодаря этому модель «помнит» предыдущие реплики.
-
-## Основные функции
-
-| Функция                | Что делает                                      |
-|------------------------|-------------------------------------------------|
-| `create_chat_session()` | Создаёт новую сессию с пустой историей          |
-| `send_message()`        | Отправляет сообщение + сохраняет контекст       |
-| `get_conversation_history()` | Возвращает текущую историю диалога         |
-| `reset_chat()`          | Очищает историю (оставляет system prompt)       |
-
-## Переменные окружения
-
-| Переменная          | Описание                                      | Пример значения                          |
-|---------------------|-----------------------------------------------|------------------------------------------|
-| `OPENAI_API_KEY`    | API-ключ провайдера                           | `sk-...` или `gsk_...`                   |
-| `OPENAI_BASE_URL`   | Адрес API (если не OpenAI)                    | `https://api.proxyapi.ru/openai/v1`      |
-| `OPENAI_MODEL`      | Модель по умолчанию                           | `llama-3.3-70b-versatile`                |
 
 ## Структура проекта
 
 ```
 TextAgent/
-├── .env.example
-├── .venv/                 # виртуальное окружение
-├── chat_test.py           # основной код + демо
+├── text_agent.py      # Ядро агента (консольный режим)
+├── bot.py             # Telegram-бот
+├── chat_test.py       # Минимальный пример Chat Completions
 ├── requirements.txt
+├── .env.example       # Шаблон переменных окружения
 └── README.md
 ```
 
-## Полезные ссылки
+## Конфигурация (.env)
 
-- Официальная документация OpenAI Chat Completions: https://platform.openai.com/docs/guides/chat-completions
-- ProxyAPI.ru (рекомендуется на курсе): https://proxyapi.ru
-- Groq: https://groq.com
-- OpenRouter: https://openrouter.ai
-- Ollama: https://ollama.com
+```env
+# OpenAI-совместимый бэкенд
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1   # или другой провайдер
+OPENAI_MODEL=gpt-4o-mini
 
-Удачи с экспериментами!
+# Anthropic (Claude + thinking)
+ANTHROPIC_API_KEY=sk-...
+ANTHROPIC_BASE_URL=https://api.proxyapi.ru/anthropic
+ANTHROPIC_MODEL=claude-sonnet-4-5
+ANTHROPIC_THINKING_BUDGET=1500
+
+# Telegram
+TELEGRAM_BOT_TOKEN=123456:ABCDEF...
+```
+
+## Провайдеры
+
+Если прямой доступ к `api.openai.com` недоступен из вашего региона, используйте переменную `OPENAI_BASE_URL` для указания альтернативного провайдера.
+
+### ProxyAPI.ru
+
+Российский прокси для OpenAI и Anthropic API. Принимает ключи этих же сервисов.
+
+```env
+OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1
+ANTHROPIC_BASE_URL=https://api.proxyapi.ru/anthropic
+```
+
+### Groq
+
+Бесплатный и очень быстрый inference. Полностью совместим с OpenAI API.
+
+```env
+OPENAI_API_KEY=gsk_ваш_ключ
+OPENAI_BASE_URL=https://api.groq.com/openai/v1
+OPENAI_MODEL=llama-3.3-70b-versatile
+```
+
+### OpenRouter
+
+Единый API для сотен моделей (Llama, Claude, Gemini, Mistral и др.).
+
+```env
+OPENAI_API_KEY=sk-or-ваш_ключ
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_MODEL=meta-llama/llama-3.1-70b-instruct
+```
+
+### Ollama (локально)
+
+Запуск моделей локально без интернета.
+
+```env
+OPENAI_API_KEY=ollama
+OPENAI_BASE_URL=http://localhost:11434/v1
+OPENAI_MODEL=llama3.2
+```
 
 ## Telegram-бот
 
-Проект поддерживает запуск в виде Telegram-бота с теми же возможностями:
+Бот предоставляет полный доступ к агенту через Telegram с удобным интерфейсом.
 
-- Переключение между обычной моделью и думающей (Claude 4.5 Sonnet + отображение reasoning)
-- Сохранение истории диалога (отдельный файл на каждого пользователя)
-- Конфигурация через `.env`
-
-### Запуск бота
-
-1. Получи токен у [@BotFather](https://t.me/BotFather) и добавь в `.env`:
-   ```env
-   TELEGRAM_BOT_TOKEN=123456:ABCDEF...
-   ```
-
-2. Установи зависимости (если ещё не сделал):
-   ```bash
-   .venv/bin/pip install -r requirements.txt
-   ```
-
-3. Запусти бота:
-   ```bash
-   .venv/bin/python bot.py
-   ```
-
-В боте доступны команды:
-- `/start`
-- `/mode thinking` / `/mode normal`
-- `/thinking 1500`
-- `/reset`
-- `/status`
-
-По умолчанию бот запускается в режиме думающей модели.
-
----
-
-## Переход на Anthropic (Claude) — как на уроке
-
-Преподаватель показал использование библиотеки `anthropic` через ProxyAPI.ru с поддержкой **thinking** (размышления модели).
-
-### 1. Установите зависимость
+### Запуск
 
 ```bash
-.venv/bin/pip install -r requirements.txt
+.venv/bin/python bot.py
 ```
 
-(в requirements уже добавлен `anthropic`)
+### Команды
 
-### 2. Настройте .env
+| Команда | Описание |
+|---|---|
+| `/start` | Приветствие и главное меню |
+| `/mode thinking` | Переключить на Claude (режим thinking) |
+| `/mode normal` | Переключить на обычную модель |
+| `/thinking 1500` | Установить бюджет токенов для рассуждений |
+| `/reset` | Сбросить историю диалога |
+| `/status` | Текущий режим и статистика |
 
-```env
-ANTHROPIC_API_KEY=ваш-ключ-от-proxyapi-для-anthropic
-ANTHROPIC_BASE_URL=https://api.proxyapi.ru/anthropic
-ANTHROPIC_MODEL=claude-sonnet-4-5
-```
+Все ключевые действия также доступны через **inline-кнопки** под каждым ответом.
 
-### 3. Запустите интерактивный чат
+## Как работает сохранение контекста
 
-```bash
-.venv/bin/python text_agent.py
-```
-
-### 4. Включите вывод размышлений (thinking)
-
-Внутри программы:
-
-```
-/thinking on
-```
-
-или сразу с бюджетом токенов:
-
-```
-/thinking 1000
-```
-
-Пример кода, как на скрине урока:
+При каждом запросе к API передаётся полная история диалога:
 
 ```python
-import anthropic
-from dotenv import load_dotenv
-import os
-load_dotenv()
-
-client = anthropic.Anthropic(
-    api_key=os.getenv("ANTHROPIC_API_KEY"),
-    base_url="https://api.proxyapi.ru/anthropic",
+session["messages"].append({"role": "user", "content": user_message})
+response = client.chat.completions.create(
+    model=session["model"],
+    messages=session["messages"],  # ← вся история
 )
-
-message = client.messages.create(
-    model="claude-sonnet-4-5",
-    thinking={
-        "type": "enabled",
-        "budget_tokens": 500
-    },
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "Привет!"}
-            ]
-        }
-    ]
-)
+session["messages"].append({"role": "assistant", "content": response_text})
 ```
 
-### Команды в text_agent.py
+История автоматически сохраняется на диск после каждого обмена и загружается при следующем запуске.
 
-- `/thinking on` — включить показ размышлений
-- `/thinking 800` — включить + задать бюджет токенов
-- `/thinking off` — выключить
-- `/model claude-sonnet-4-5` — сменить модель
+## Режим thinking (Anthropic Claude)
 
-Thinking — это прямой аналог того, что раньше пытались сделать через OpenAI Responses API. С Anthropic это работает чище.
+В режиме thinking модель предоставляет подробные внутренние рассуждения перед финальным ответом. Telegram-бот выводит их отдельным блоком:
+
+```
+🧠 Размышления модели:
+Пользователь спрашивает о... Нужно учесть...
+
+Вот мой ответ:
+...
+```
+
+Бюджет токенов для рассуждений настраивается через `ANTHROPIC_THINKING_BUDGET` или команду `/thinking`.
+
+## Зависимости
+
+```
+openai>=1.0.0
+anthropic>=0.40.0
+python-telegram-bot>=20.0
+python-dotenv>=1.0.0
+```
+
+## Ссылки
+
+- [OpenAI Chat Completions API](https://platform.openai.com/docs/guides/chat-completions)
+- [Anthropic API](https://docs.anthropic.com)
+- [python-telegram-bot](https://python-telegram-bot.org)
+- [ProxyAPI.ru](https://proxyapi.ru)
+- [Groq](https://groq.com)
+- [OpenRouter](https://openrouter.ai)
+- [Ollama](https://ollama.com)
+
+## Лицензия
+
+MIT

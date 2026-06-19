@@ -139,7 +139,7 @@ if __name__ == "__main__":
         print("ℹ️  Вы используете официальный OpenAI.")
         print("   В некоторых странах (включая Россию) прямой доступ к api.openai.com заблокирован.")
         print("   Чтобы заработало — укажите в .env альтернативный провайдер через OPENAI_BASE_URL.\n")
-        print("   Рекомендация преподавателя:")
+        print("   Рекомендуемый вариант:")
         print("     • ProxyAPI.ru (простой прокси на реальные модели OpenAI)")
         print("       OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1")
         print("       (используйте свой обычный OPENAI_API_KEY от OpenAI)\n")
